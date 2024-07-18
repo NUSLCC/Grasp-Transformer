@@ -1,9 +1,10 @@
 import os
 import glob
-origin_path = os.getcwd()#记录一下原始的路径
-os.chdir('/home/lcc/Desktop/multiobject/rgbd')#这是我的路径
-print(os.listdir())
-path='/home/lcc/Desktop/multiobject/rgbd'
+# origin_path = os.getcwd()#记录一下原始的路径
+# os.chdir('/home/lcc/Desktop/multiobject/rgbd')#这是我的路径
+# print(os.listdir())
+home_dir = os.path.expanduser("~")
+path=home_dir + "/Dataset/multiobject/rgbd"
 depth = glob.glob(os.path.join(path,'depth_*.png'))
 depth.sort()
 print(depth[0:10])

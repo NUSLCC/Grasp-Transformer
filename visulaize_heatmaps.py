@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 import numpy as np
@@ -22,8 +23,9 @@ def parse_args():
     parser.add_argument('--network', type=str,default="./output/models/220623_1311_/epoch_08_iou_0.97", help='Path to saved network to evaluate')
 
     # Dataset & Data & Training
+    home_dir = os.path.expanduser("~")
     parser.add_argument('--dataset', type=str, default="cornell",help='Dataset Name ("cornell" or "jaquard")')
-    parser.add_argument('--dataset-path', type=str,default="/home/lcc/Dataset/cornell" ,help='Path to dataset')
+    parser.add_argument('--dataset-path', type=str,default=home_dir + "/Dataset/cornell" ,help='Path to dataset')
     parser.add_argument('--use-depth', type=int, default=0, help='Use Depth image for training (1/0)')
     parser.add_argument('--use-rgb', type=int, default=1, help='Use RGB image for training (0/1)')
     parser.add_argument('--split', type=float, default=0.9,

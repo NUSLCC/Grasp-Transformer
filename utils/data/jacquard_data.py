@@ -20,7 +20,8 @@ class JacquardDataset(GraspDatasetBase):
         super(JacquardDataset, self).__init__(**kwargs)
 
         # graspf = glob.glob(os.path.join(file_path, '*', '*_grasps.txt'))
-        graspf = glob.glob('/home/lcc/Dataset/jacquard' + '/*/*/' + '*_grasps.txt')
+        home_dir = os.path.expanduser("~")
+        graspf = glob.glob(home_dir + '/Dataset/jacquard' + '/*/*/' + '*_grasps.txt')
         graspf.sort()
         l = len(graspf)
         print("len jaccquard:", l)

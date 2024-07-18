@@ -17,7 +17,8 @@ class CornellDataset(GraspDatasetBase):
         :param kwargs: kwargs for GraspDatasetBase
         """
         super(CornellDataset, self).__init__(**kwargs)
-        file_path="/home/lcc/Desktop/multiobject/rgbd"
+        home_dir = os.path.expanduser("~")
+        file_path=home_dir + "/Dataset/multiobject/rgbd"
         graspf = glob.glob(os.path.join(file_path,'rgb_*.txt'))
         graspf.sort()
         l = 95
