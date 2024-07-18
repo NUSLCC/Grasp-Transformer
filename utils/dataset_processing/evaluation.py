@@ -32,7 +32,7 @@ def plot_output(rgb_img,rgb_img_1, depth_img, grasp_q_img, grasp_angle_img, no_g
         g.plot(ax)
     ax.set_title('RGB')
     ax.axis('off')
-    # ax.savefig('/home/sam/compare_conv/Q_%d.pdf' % counter, bbox_inches='tight')
+    # ax.savefig('/home/lcc/compare_conv/Q_%d.pdf' % counter, bbox_inches='tight')
 
 
     gs_2 = detect_grasps(grasp_q_img_ggcnn, grasp_angle_img_ggcnn, width_img=grasp_width_img_ggcnn, no_grasps=5)
@@ -111,7 +111,7 @@ def plot_output(rgb_img,rgb_img_1, depth_img, grasp_q_img, grasp_angle_img, no_g
         # for g in gs:
         #     g.plot(plot)
         plt.axis("off")
-        plt.savefig('/home/sam/compare_conv/RGB_1_%d.pdf'%counter, bbox_inches='tight')
+        plt.savefig('/home/lcc/compare_conv/RGB_1_%d.pdf'%counter, bbox_inches='tight')
         plt.show()
         plt.imshow(rgb_img)
         for g in gs_2:
@@ -121,18 +121,18 @@ def plot_output(rgb_img,rgb_img_1, depth_img, grasp_q_img, grasp_angle_img, no_g
         # for g in gs:
         #     g.plot(plot)
         plt.axis("off")
-        plt.savefig('/home/sam/compare_conv/RGB_2_%d.pdf' % counter, bbox_inches='tight')
+        plt.savefig('/home/lcc/compare_conv/RGB_2_%d.pdf' % counter, bbox_inches='tight')
         plt.show()
 
         plot1 = plt.imshow(grasp_q_img, cmap="jet", vmin=0, vmax=1)
         plt.axis("off")
         plt.colorbar(plot1)
-        plt.savefig('/home/sam/compare_conv/Q_1_%d.pdf'%counter, bbox_inches='tight')
+        plt.savefig('/home/lcc/compare_conv/Q_1_%d.pdf'%counter, bbox_inches='tight')
         plt.show()
         plot1 = plt.imshow(grasp_q_img_ggcnn, cmap="jet", vmin=0, vmax=1)
         plt.axis("off")
         plt.colorbar(plot1)
-        plt.savefig('/home/sam/compare_conv/Q_2_%d.pdf' % counter, bbox_inches='tight')
+        plt.savefig('/home/lcc/compare_conv/Q_2_%d.pdf' % counter, bbox_inches='tight')
         plt.show()
         #
         counter=counter+1
