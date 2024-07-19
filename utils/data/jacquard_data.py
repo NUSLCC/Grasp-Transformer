@@ -55,7 +55,10 @@ class JacquardDataset(GraspDatasetBase):
         return depth_img.img
 
     def get_rgb(self, idx, rot=0, zoom=1.0, normalise=True):
-        rgb_img = image.Image.from_file(self.rgb_files[idx])
+        try:            
+            rgb_img = image.Image.from_file(self.rgb_files[idx])
+        except Exception as e:
+            print(self.rgb_files[idx])
         rgb_img.rotate(rot)
         rgb_img.zoom(zoom)
         rgb_img.resize((self.output_size, self.output_size))

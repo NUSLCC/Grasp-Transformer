@@ -13,17 +13,16 @@ def validate(net, device, val_data, batches_per_epoch):
     :param batches_per_epoch: Number of batches to run
     :return: Successes, Failures and Losses
     """
-    net.eval()
-
     results = {
         'correct': 0,
         'failed': 0,
         'loss': 0,
         'losses': {
-
         }
     }
 
+    net.eval()
+    
     ld = len(val_data)
 
     with torch.no_grad():
@@ -52,11 +51,7 @@ def validate(net, device, val_data, batches_per_epoch):
                 s = evaluation.calculate_iou_match(q_out, ang_out,
                                                    val_data.dataset.get_gtbb(didx, rot, zoom_factor),
                                                    no_grasps=2,
-                                                   grasp_width=w_out,
-                                                   )
-
-
-
+                                                   grasp_width=w_out,)
 
                 if s:
                     results['correct'] += 1
@@ -90,18 +85,12 @@ def train(epoch, net, device, train_data, optimizer, batches_per_epoch, vis=Fals
     # Use batches per epoch to make training on different sized datasets (cornell/jacquard) more equivalent.
     while batch_idx < batches_per_epoch:
         for x, y, _, _, _ in train_data:
-            # print("shape:",x.shape)
             batch_idx += 1
-            # if batch_idx >= batches_per_epoch:
-            #     break
-            # print("x_0:",x[0].shape,y[0][0].shape)
-            # plt.imshow(x[0].permute(1,2,0).numpy())
-            # plt.show()
-            # plt.imshow(y[0][0][0].numpy())
-            # plt.show()
+            if batch_idx >= batches_per_epoch:
+                break
+
             xc = x.to(device)
             yc = [yy.to(device) for yy in y]
-            # print("xc shape:",xc.shape)
             lossd = net.compute_loss(xc, yc)
 
             loss = lossd['loss']

@@ -7,13 +7,14 @@ import torch
 import torch.utils.data
 import torch.optim as optim
 from torchsummary import summary
+import tensorboardX
 from traning import train, validate
 from utils.data import get_dataset
 from models.swin import SwinTransformerSys
 logging.basicConfig(level=logging.INFO)
 home_dir = os.path.expanduser("~")
 default_dataset = "jacquard"
-cuda_device = "cuda:1"
+cuda_device = "cuda:0"
 
 def parse_args():
     parser = argparse.ArgumentParser(description='TF-Grasp')
@@ -26,14 +27,16 @@ def parse_args():
     parser.add_argument('--use-rgb', type=int, default=1, help='Use RGB image for training (0/1)')
     parser.add_argument('--split', type=float, default=0.9, help='Fraction of data for training (remainder is validation)')
     parser.add_argument('--ds-rotate', type=float, default=0.0, help='Shift the start point of the dataset to use a different test/train split for cross validation.')
-    parser.add_argument('--num-workers', type=int, default=16, help='Dataset workers')
+    parser.add_argument('--num-workers', type=int, default=24, help='Dataset workers')
+    parser.add_argument('--vis', type=bool, default=False, help='vis')    
+    parser.add_argument('--epochs', type=int, default=100, help='Training epochs')    
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
-    parser.add_argument('--vis', type=bool, default=False, help='vis')
-    parser.add_argument('--epochs', type=int, default=1000, help='Training epochs')
-    parser.add_argument('--batches-per-epoch', type=int, default=200, help='Batches per Epoch')
-    parser.add_argument('--val-batches', type=int, default=32, help='Validation Batches')
+    parser.add_argument('--batches-per-epoch', type=int, default=1500, help='Batches per Epoch')
+    parser.add_argument('--val-batch-size', type=int, default=1, help='Validation Batch Size')
+    parser.add_argument('--val-batches-per-epoch', type=int, default=5440, help='Validation Batches per Epoch')
     parser.add_argument('--description', type=str, default=default_dataset, help='Training description')
     parser.add_argument('--outdir', type=str, default='output/models/', help='Training Output Directory')
+    parser.add_argument('--logdir', type=str, default='tensorboard/', help='Log directory')
 
     args = parser.parse_args()
     return args
@@ -47,27 +50,27 @@ def run():
     save_folder = os.path.join(args.outdir, net_desc)
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
-    # tb = tensorboardX.SummaryWriter(os.path.join(args.logdir, net_desc))
+    tb = tensorboardX.SummaryWriter(os.path.join(args.logdir, net_desc))
 
     # Load Dataset
     logging.info('Loading {} Dataset...'.format(args.dataset.title()))
     Dataset = get_dataset(args.dataset)
 
     train_dataset = Dataset(args.dataset_path, start=0.0, end=args.split, ds_rotate=args.ds_rotate,
-                            random_rotate=True, random_zoom=False,
+                            random_rotate=True, random_zoom=True,
                             include_depth=args.use_depth, include_rgb=args.use_rgb)
     
     train_data = torch.utils.data.DataLoader(train_dataset,
                                              batch_size=args.batch_size,
-                                             shuffle=True,
+                                             shuffle=False,
                                              num_workers=args.num_workers)
     
     val_dataset = Dataset(args.dataset_path, start=args.split, end=1.0, ds_rotate=args.ds_rotate,
-                          random_rotate=True, random_zoom=False,
+                          random_rotate=True, random_zoom=True,
                           include_depth=args.use_depth, include_rgb=args.use_rgb)
     
     val_data = torch.utils.data.DataLoader(val_dataset,
-                                           batch_size=1,
+                                           batch_size=args.val_batch_size,
                                            shuffle=False,
                                            num_workers=args.num_workers)
     
@@ -93,18 +96,27 @@ def run():
     for epoch in range(args.epochs):
         logging.info('Beginning Epoch {:02d}'.format(epoch))
         print("current lr:",optimizer.state_dict()['param_groups'][0]['lr'])
-        # for i in range(5000):
+        logging.info('Training...')
         train_results = train(epoch, net, device, train_data, optimizer, args.batches_per_epoch, vis=args.vis)
+        logging.info('After training...')
+        # Log training losses to tensorboard
+        tb.add_scalar('loss/train_loss', train_results['loss'], epoch)
+        for n, l in train_results['losses'].items():
+            tb.add_scalar('train_loss/' + n, l, epoch)
 
-        # schedule.step()
         # Run Validation
         logging.info('Validating...')
-        test_results = validate(net, device, val_data, args.val_batches)
+        test_results = validate(net, device, val_data, args.val_batches_per_epoch)
         logging.info('%d/%d = %f' % (test_results['correct'], test_results['correct'] + test_results['failed'],
                                      test_results['correct']/(test_results['correct']+test_results['failed'])))
 
+        # Log validation results to tensorbaord
+        tb.add_scalar('loss/IOU', test_results['correct'] / (test_results['correct'] + test_results['failed']), epoch)
+        tb.add_scalar('loss/val_loss', test_results['loss'], epoch)
+        for n, l in test_results['losses'].items():
+            tb.add_scalar('val_loss/' + n, l, epoch)
+
         iou = test_results['correct'] / (test_results['correct'] + test_results['failed'])
-        
         if epoch%1==0 or iou>best_iou:
             torch.save(net, os.path.join(save_folder, 'epoch_%02d_iou_%0.2f' % (epoch, iou)))
             torch.save(net.state_dict(), os.path.join(save_folder, 'epoch_%02d_iou_%0.2f_statedict.pt' % (epoch, iou)))
