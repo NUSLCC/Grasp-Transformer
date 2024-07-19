@@ -13,7 +13,7 @@ from models.swin import SwinTransformerSys
 logging.basicConfig(level=logging.INFO)
 home_dir = os.path.expanduser("~")
 default_dataset = "jacquard"
-cuda_device = "cuda:0"
+cuda_device = "cuda:1"
 
 def parse_args():
     parser = argparse.ArgumentParser(description='TF-Grasp')
@@ -29,10 +29,10 @@ def parse_args():
     parser.add_argument('--num-workers', type=int, default=16, help='Dataset workers')
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
     parser.add_argument('--vis', type=bool, default=False, help='vis')
-    parser.add_argument('--epochs', type=int, default=2000, help='Training epochs')
+    parser.add_argument('--epochs', type=int, default=1000, help='Training epochs')
     parser.add_argument('--batches-per-epoch', type=int, default=200, help='Batches per Epoch')
     parser.add_argument('--val-batches', type=int, default=32, help='Validation Batches')
-    parser.add_argument('--description', type=str, default='', help='Training description')
+    parser.add_argument('--description', type=str, default=default_dataset, help='Training description')
     parser.add_argument('--outdir', type=str, default='output/models/', help='Training Output Directory')
 
     args = parser.parse_args()
@@ -56,22 +56,22 @@ def run():
     train_dataset = Dataset(args.dataset_path, start=0.0, end=args.split, ds_rotate=args.ds_rotate,
                             random_rotate=True, random_zoom=False,
                             include_depth=args.use_depth, include_rgb=args.use_rgb)
-    train_data = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=args.num_workers
-    )
+    
+    train_data = torch.utils.data.DataLoader(train_dataset,
+                                             batch_size=args.batch_size,
+                                             shuffle=True,
+                                             num_workers=args.num_workers)
+    
     val_dataset = Dataset(args.dataset_path, start=args.split, end=1.0, ds_rotate=args.ds_rotate,
                           random_rotate=True, random_zoom=False,
                           include_depth=args.use_depth, include_rgb=args.use_rgb)
-    val_data = torch.utils.data.DataLoader(
-        val_dataset,
-        batch_size=1,
-        shuffle=False,
-        num_workers=args.num_workers
-    )
-    logging.info('Done')
+    
+    val_data = torch.utils.data.DataLoader(val_dataset,
+                                           batch_size=1,
+                                           shuffle=False,
+                                           num_workers=args.num_workers)
+    
+    logging.info('Loading {} Dataset Done'.format(args.dataset.title()))
 
     logging.info('Loading Network...')
     input_channels = 1*args.use_depth + 3*args.use_rgb
@@ -81,13 +81,14 @@ def run():
     optimizer = optim.AdamW(net.parameters(), lr=1e-4)
     listy = [x * 2 for x in range(1,1000,5)]
     schedule=torch.optim.lr_scheduler.MultiStepLR(optimizer,milestones=listy,gamma=0.5)
-    logging.info('Done')
-    summary(net, (input_channels, 224, 224))
-    f = open(os.path.join(save_folder, 'net.txt'), 'w')
-    sys.stdout = f
-    summary(net, (input_channels, 224, 224))
-    sys.stdout = sys.__stdout__
-    f.close()
+    logging.info('Loading Network Done')
+    # summary(net, (input_channels, 224, 224))
+    # f = open(os.path.join(save_folder, 'net.txt'), 'w')
+    # sys.stdout = f
+    # summary(net, (input_channels, 224, 224))
+    # sys.stdout = sys.__stdout__
+    # f.close()
+    # logging.info('Summary Done')
     best_iou = 0.0
     for epoch in range(args.epochs):
         logging.info('Beginning Epoch {:02d}'.format(epoch))
@@ -103,6 +104,7 @@ def run():
                                      test_results['correct']/(test_results['correct']+test_results['failed'])))
 
         iou = test_results['correct'] / (test_results['correct'] + test_results['failed'])
+        
         if epoch%1==0 or iou>best_iou:
             torch.save(net, os.path.join(save_folder, 'epoch_%02d_iou_%0.2f' % (epoch, iou)))
             torch.save(net.state_dict(), os.path.join(save_folder, 'epoch_%02d_iou_%0.2f_statedict.pt' % (epoch, iou)))
