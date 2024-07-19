@@ -11,33 +11,34 @@ from traning import train, validate
 from utils.data import get_dataset
 from models.swin import SwinTransformerSys
 logging.basicConfig(level=logging.INFO)
+home_dir = os.path.expanduser("~")
+default_dataset = "jacquard"
+cuda_device = "cuda:0"
+
 def parse_args():
     parser = argparse.ArgumentParser(description='TF-Grasp')
 
     # Network
     # Dataset & Data & Training
-    home_dir = os.path.expanduser("~")
-    default_dataset = "jacquard"
     parser.add_argument('--dataset', type=str, default=default_dataset, help='Dataset Name ("cornell" or "jaquard")')
     parser.add_argument('--dataset-path', type=str, default=home_dir + "/Dataset/" + default_dataset, help='Path to dataset')
     parser.add_argument('--use-depth', type=int, default=0, help='Use Depth image for training (1/0)')
     parser.add_argument('--use-rgb', type=int, default=1, help='Use RGB image for training (0/1)')
     parser.add_argument('--split', type=float, default=0.9, help='Fraction of data for training (remainder is validation)')
-    parser.add_argument('--ds-rotate', type=float, default=0.0,
-                        help='Shift the start point of the dataset to use a different test/train split for cross validation.')
-    parser.add_argument('--num-workers', type=int, default=8, help='Dataset workers')
-
+    parser.add_argument('--ds-rotate', type=float, default=0.0, help='Shift the start point of the dataset to use a different test/train split for cross validation.')
+    parser.add_argument('--num-workers', type=int, default=16, help='Dataset workers')
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
     parser.add_argument('--vis', type=bool, default=False, help='vis')
     parser.add_argument('--epochs', type=int, default=2000, help='Training epochs')
     parser.add_argument('--batches-per-epoch', type=int, default=200, help='Batches per Epoch')
     parser.add_argument('--val-batches', type=int, default=32, help='Validation Batches')
-    # Logging etc.
     parser.add_argument('--description', type=str, default='', help='Training description')
     parser.add_argument('--outdir', type=str, default='output/models/', help='Training Output Directory')
 
     args = parser.parse_args()
     return args
+
+
 def run():
     args = parse_args()
     dt = datetime.datetime.now().strftime('%y%m%d_%H%M')
@@ -75,7 +76,7 @@ def run():
     logging.info('Loading Network...')
     input_channels = 1*args.use_depth + 3*args.use_rgb
     net = SwinTransformerSys(in_chans=input_channels, embed_dim=48, num_heads=[1, 2, 4, 8])
-    device = torch.device("cuda:0")
+    device = torch.device(cuda_device)
     net = net.to(device)
     optimizer = optim.AdamW(net.parameters(), lr=1e-4)
     listy = [x * 2 for x in range(1,1000,5)]
