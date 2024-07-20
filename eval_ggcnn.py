@@ -19,7 +19,7 @@ def parse_args():
     # Dataset & Data & Training
     home_dir = os.path.expanduser("~")
     default_dataset = "jacquard"
-    parser.add_argument('--dataset', type=str, default=default_dataset, help='Dataset Name ("cornell" or "jaquard")')
+    parser.add_argument('--dataset', type=str, default=default_dataset, help='Dataset Name ("cornell" or "jacquard")')
     parser.add_argument('--dataset-path', type=str, default=home_dir + "/Dataset/" + default_dataset, help='Path to dataset')
     parser.add_argument('--use-depth', type=int, default=1, help='Use Depth image for evaluation (1/0)')
     parser.add_argument('--use-rgb', type=int, default=0, help='Use RGB image for evaluation (0/1)')
