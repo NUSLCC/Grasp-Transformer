@@ -4,6 +4,7 @@ import torch.optim as optim
 from utils.dataset_processing import evaluation
 from models.common import post_process_output
 import logging
+
 def validate(net, device, val_data, batches_per_epoch):
     """
     Run validation.
@@ -86,7 +87,7 @@ def train(epoch, net, device, train_data, optimizer, batches_per_epoch, vis=Fals
     while batch_idx < batches_per_epoch:
         for x, y, _, _, _ in train_data:
             batch_idx += 1
-            if batch_idx >= batches_per_epoch:
+            if batches_per_epoch is not None and batch_idx >= batches_per_epoch:
                 break
 
             xc = x.to(device)
@@ -95,7 +96,7 @@ def train(epoch, net, device, train_data, optimizer, batches_per_epoch, vis=Fals
 
             loss = lossd['loss']
 
-            if batch_idx % 10 == 0:
+            if batch_idx % 100 == 0:
                 logging.info('Epoch: {}, Batch: {}, Loss: {:0.4f}'.format(epoch, batch_idx, loss.item()))
 
             results['loss'] += loss.item()
